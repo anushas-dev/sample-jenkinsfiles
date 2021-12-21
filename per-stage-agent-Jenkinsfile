@@ -1,0 +1,53 @@
+pipeline {
+    agent none
+    stages {
+        stage('Build') {
+            agent {
+                docker {
+                    image 'python:3.8.10'
+                    args '--user root' // run containers as root
+                }
+            }
+            when {
+                changeset "**/py-app/**"
+            }
+            steps {
+                echo 'Compiling py app'
+                dir('py-app') {
+                    sh 'pip3 install -r requirements.txt'
+                }
+            }
+        }
+        stage('Test') {
+            agent {
+                docker {
+                    image 'python:3.8.10'
+                    args '--user root' // run containers as root
+                }
+            }            
+            when {
+                changeset "**/py-app/**"
+            }
+            steps {
+                echo 'Compiling py app'
+                dir('py-app') {
+                    sh 'nosetests -v' // nose for python testing
+                }
+            }            
+        }
+        stage('Verify Before Package') {
+            agent any
+            steps {
+                sh 'docker images | grep py-app' 
+            }
+        }
+    }
+    post {
+        always {
+        }        
+        success {
+        }
+        failure {
+        }
+    }
+}
